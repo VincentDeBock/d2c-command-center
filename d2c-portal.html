@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D2C Command Center – Edgard & Cooper</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal:       #007B76;
+  --teal-light: #00A89D;
+  --teal-dim:   #004D4A;
+  --bg:         #0C1312;
+  --surface:    #131F1E;
+  --surface2:   #1A2927;
+  --border:     #1F3230;
+  --text:       #E8EFEE;
+  --muted:      #6B8A88;
+  --green:      #2ECC96;
+  --amber:      #F5A623;
+  --red:        #E05252;
+  --blue:       #4A9EFF;
+  --font-display: 'Fraunces', serif;
+  --font-mono:    'DM Mono', monospace;
+  --font-body:    'DM Sans', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-weight: 300; min-height: 100vh; overflow-x: hidden; }
+body::before { content:''; position:fixed; inset:0; background-image: linear-gradient(rgba(0,123,118,0.03) 1px,transparent 1px), linear-gradient(90deg,rgba(0,123,118,0.03) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+
+/* ── LAYOUT ── */
+.app { display: flex; min-height: 100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 220px; min-width: 220px; background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; overflow-y: auto;
+}
+.sidebar-brand { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); }
+.sidebar-brand .logo { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--text); }
+.sidebar-brand .logo em { font-style: italic; font-weight: 300; color: var(--teal-light); }
+.sidebar-brand .sub { font-family: var(--font-mono); font-size: 9px; color: var(--muted); margin-top: 3px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+.sidebar-section { padding: 14px 0 6px; }
+.sidebar-section-label { font-family: var(--font-mono); font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; padding: 0 18px 8px; }
+.nav-item {
+  display: flex; align-items: center; gap: 9px; padding: 7px 18px; cursor: pointer;
+  font-size: 11px; color: var(--muted); transition: all 0.15s; border-left: 2px solid transparent;
+}
+.nav-item:hover { color: var(--text); background: rgba(0,123,118,0.06); }
+.nav-item.active { color: var(--teal-light); background: rgba(0,123,118,0.1); border-left-color: var(--teal-light); }
+.nav-item .nav-icon { font-size: 12px; width: 14px; text-align: center; }
+.nav-item .nav-level { font-family: var(--font-mono); font-size: 8px; color: var(--teal-dim); margin-left: auto; }
+.nav-item.active .nav-level { color: var(--teal-light); }
+
+/* ── MAIN CONTENT ── */
+.content { margin-left: 220px; flex: 1; position: relative; z-index: 1; }
+
+/* ── TOP BAR ── */
+.topbar {
+  position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--border);
+  padding: 0 32px; height: 52px; display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.back-btn {
+  display: none; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px;
+  color: var(--muted); cursor: pointer; padding: 5px 10px; border: 1px solid var(--border);
+  border-radius: 4px; transition: all 0.15s;
+}
+.back-btn:hover { color: var(--teal-light); border-color: var(--teal-dim); }
+.back-btn.visible { display: flex; }
+.page-title { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.page-title span { color: var(--text); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.topbar-meta { font-family: var(--font-mono); font-size: 9px; color: var(--muted); }
+.period-badge { font-family: var(--font-mono); font-size: 10px; color: var(--teal-light); background: rgba(0,123,118,0.12); border: 1px solid var(--teal-dim); padding: 3px 10px; border-radius: 4px; }
+
+/* ── VIEWS ── */
+.view { display: none; padding: 0 0 60px; animation: fadeUp 0.3s ease both; }
+.view.active { display: block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── DIVIDER LABELS ── */
+.divider-label {
+  display: flex; align-items: center; gap: 12px; padding: 10px 32px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.divider-label span { font-family: var(--font-mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; white-space: nowrap; }
+.divider-line { flex: 1; height: 1px; background: var(--border); }
+
+/* ── SECTION ROW ── */
+.section { display: grid; border-bottom: 1px solid var(--border); }
+.section--revenue    { grid-template-columns: 200px 1fr 1fr 1fr; }
+.section--retention  { grid-template-columns: 200px 1fr 1fr 1fr 1fr; }
+.section--acquisition{ grid-template-columns: 200px 1fr 1fr 1fr; }
+.section--quality    { grid-template-columns: 200px 1fr 1fr 1fr; }
+.section--ops        { grid-template-columns: 200px 1fr 1fr 1fr; }
+
+.section-label { display:flex; flex-direction:column; justify-content:center; padding:24px 20px; border-right:1px solid var(--border); gap:6px; }
+.section-number { font-family:var(--font-mono); font-size:9px; color:var(--teal-light); letter-spacing:0.15em; text-transform:uppercase; }
+.section-title { font-family:var(--font-display); font-size:15px; font-weight:600; line-height:1.2; }
+.section-sub { font-size:10px; color:var(--muted); line-height:1.5; max-width:155px; }
+
+/* ── TILES ── */
+.tile { padding:22px 20px; border-right:1px solid var(--border); display:flex; flex-direction:column; gap:7px; position:relative; transition:background 0.15s; }
+.tile:last-child { border-right:none; }
+.tile-label { font-family:var(--font-mono); font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; }
+.tile-value { font-family:var(--font-display); font-size:32px; font-weight:600; letter-spacing:-0.02em; line-height:1; }
+.tile-value.lg { font-size:38px; }
+.tile-value.md { font-size:24px; }
+.tile-delta { display:inline-flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:11px; padding:2px 8px; border-radius:4px; width:fit-content; }
+.delta--up   { color:var(--green); background:rgba(46,204,150,0.1); }
+.delta--down { color:var(--red);   background:rgba(224,82,82,0.1); }
+.delta--warn { color:var(--amber); background:rgba(245,166,35,0.1); }
+.tile-context { font-size:10px; color:var(--muted); line-height:1.5; }
+.tile-context strong { color:var(--text); font-weight:500; }
+.annotation { position:absolute; top:12px; right:12px; font-family:var(--font-mono); font-size:8px; color:var(--muted); background:var(--surface2); border-radius:3px; padding:2px 6px; border:1px solid var(--border); }
+
+/* ── DRILL LINKS ── */
+.drill-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:auto; padding-top:10px; }
+.drill-link {
+  display:inline-flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:9px;
+  color:var(--teal-light); border:1px solid var(--teal-dim); border-radius:4px; padding:3px 8px;
+  cursor:pointer; transition:all 0.15s; text-decoration:none; background:rgba(0,123,118,0.05);
+}
+.drill-link:hover { background:var(--teal-dim); color:var(--text); }
+.drill-chip { display:inline-flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:9px; color:var(--muted); background:var(--surface2); border-radius:3px; padding:2px 6px; cursor:pointer; transition:all 0.15s; border:1px solid transparent; }
+.drill-chip:hover { color:var(--teal-light); background:var(--teal-dim); border-color:var(--teal-dim); }
+
+/* ── SPARKS ── */
+.spark { display:flex; align-items:flex-end; gap:2px; height:36px; margin-top:6px; }
+.spark-bar { flex:1; border-radius:2px 2px 0 0; min-width:0; transition:opacity 0.15s; }
+.spark-bar:hover { opacity:0.6; }
+
+/* ── STATUS PILLS ── */
+.pill { display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:9px; border-radius:100px; padding:3px 10px; width:fit-content; }
+.pill--green { background:rgba(46,204,150,0.12); color:var(--green); border:1px solid rgba(46,204,150,0.2); }
+.pill--red   { background:rgba(224,82,82,0.12);  color:var(--red);   border:1px solid rgba(224,82,82,0.2); }
+.pill--amber { background:rgba(245,166,35,0.12); color:var(--amber); border:1px solid rgba(245,166,35,0.2); }
+.pill-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
+
+/* ── MARKET BARS ── */
+.market-bars { display:flex; flex-direction:column; gap:7px; margin-top:10px; }
+.market-row { display:flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:9px; }
+.market-name { width:44px; color:var(--muted); }
+.market-track { flex:1; height:5px; background:var(--border); border-radius:3px; overflow:hidden; }
+.market-fill { height:100%; border-radius:3px; background:var(--teal); }
+.market-fill.g { background:var(--green); }
+.market-fill.a { background:var(--amber); }
+.market-fill.r { background:var(--red); }
+.market-pct { width:34px; text-align:right; }
+
+/* ── COHORT BARS ── */
+.cohort-rows { display:flex; flex-direction:column; gap:5px; margin-top:8px; }
+.cohort-row { display:flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:9px; }
+.cohort-name { width:48px; color:var(--muted); }
+.cohort-track { flex:1; height:5px; background:var(--border); border-radius:3px; overflow:hidden; }
+.cohort-fill { height:100%; border-radius:3px; }
+.cohort-val { width:32px; text-align:right; }
+
+/* ── REASON LIST ── */
+.reason-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+.reason-row { display:flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:9px; }
+.reason-name { flex:1; color:var(--muted); }
+.reason-bar { width:64px; height:5px; background:var(--border); border-radius:2px; overflow:hidden; }
+.reason-fill { height:100%; border-radius:2px; }
+.reason-pct { width:28px; text-align:right; }
+
+/* ── TABLE ── */
+.data-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:10px; }
+.data-table th { text-align:left; padding:8px 12px; color:var(--muted); border-bottom:1px solid var(--border); font-weight:400; font-size:9px; text-transform:uppercase; letter-spacing:0.1em; }
+.data-table td { padding:9px 12px; border-bottom:1px solid rgba(31,50,48,0.5); color:var(--text); }
+.data-table tr:hover td { background:rgba(0,123,118,0.04); }
+.data-table tr:last-child td { border-bottom:none; }
+.td-green { color:var(--green); }
+.td-red   { color:var(--red); }
+.td-amber { color:var(--amber); }
+.td-muted { color:var(--muted); }
+
+/* ── SUB-DASHBOARD LAYOUT ── */
+.dash-header { padding:28px 32px 20px; border-bottom:1px solid var(--border); }
+.dash-header h2 { font-family:var(--font-display); font-size:22px; font-weight:600; }
+.dash-header h2 em { font-style:italic; font-weight:300; color:var(--teal-light); }
+.dash-header p { font-size:11px; color:var(--muted); margin-top:4px; }
+.dash-grid { display:grid; gap:1px; background:var(--border); margin:0; }
+.dash-grid--2 { grid-template-columns:1fr 1fr; }
+.dash-grid--3 { grid-template-columns:1fr 1fr 1fr; }
+.dash-grid--4 { grid-template-columns:1fr 1fr 1fr 1fr; }
+.dash-grid--12 { grid-template-columns:1fr 2fr; }
+.dash-grid--21 { grid-template-columns:2fr 1fr; }
+.dash-card { background:var(--bg); padding:24px; display:flex; flex-direction:column; gap:10px; }
+.dash-card h3 { font-family:var(--font-mono); font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; }
+.kpi-big { font-family:var(--font-display); font-size:36px; font-weight:600; letter-spacing:-0.02em; }
+.kpi-med { font-family:var(--font-display); font-size:24px; font-weight:600; letter-spacing:-0.02em; }
+.section-pad { padding:24px 32px; }
+.section-pad + .section-pad { border-top:1px solid var(--border); }
+.section-pad h3 { font-family:var(--font-mono); font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:14px; }
+
+/* ── BAR CHART ── */
+.bar-chart { display:flex; align-items:flex-end; gap:8px; height:120px; }
+.bar-col { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+.bar-col .bar { width:100%; border-radius:3px 3px 0 0; transition:opacity 0.15s; min-height:4px; }
+.bar-col .bar:hover { opacity:0.7; }
+.bar-col .bar-label { font-family:var(--font-mono); font-size:8px; color:var(--muted); }
+.bar-col .bar-val { font-family:var(--font-mono); font-size:9px; color:var(--text); }
+
+/* ── GAUGE ── */
+.gauge-wrap { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.gauge { width:100px; height:50px; position:relative; overflow:hidden; }
+.gauge svg { width:100%; height:auto; }
+
+/* ── SIGNAL BOX ── */
+.signal-box { border-radius:6px; padding:14px; display:flex; flex-direction:column; gap:6px; }
+.signal-box.red   { background:rgba(224,82,82,0.07);  border:1px solid rgba(224,82,82,0.2); }
+.signal-box.amber { background:rgba(245,166,35,0.07); border:1px solid rgba(245,166,35,0.2); }
+.signal-box.green { background:rgba(46,204,150,0.07); border:1px solid rgba(46,204,150,0.2); }
+.signal-box.blue  { background:rgba(74,158,255,0.07); border:1px solid rgba(74,158,255,0.2); }
+.signal-label { font-family:var(--font-mono); font-size:9px; letter-spacing:0.1em; }
+.signal-label.red   { color:var(--red); }
+.signal-label.amber { color:var(--amber); }
+.signal-label.green { color:var(--green); }
+.signal-label.blue  { color:var(--blue); }
+.signal-text { font-size:11px; line-height:1.5; }
+
+/* ── TIMELINE ── */
+.timeline { display:flex; flex-direction:column; gap:0; }
+.timeline-item { display:flex; gap:14px; padding:10px 0; border-bottom:1px solid rgba(31,50,48,0.5); }
+.timeline-item:last-child { border-bottom:none; }
+.timeline-dot { width:8px; height:8px; border-radius:50%; margin-top:4px; flex-shrink:0; }
+.timeline-content { flex:1; }
+.timeline-title { font-size:11px; color:var(--text); font-weight:500; }
+.timeline-sub { font-family:var(--font-mono); font-size:9px; color:var(--muted); margin-top:2px; }
+
+/* ── FUNNEL BARS ── */
+.funnel { display:flex; flex-direction:column; gap:6px; }
+.funnel-step { display:flex; align-items:center; gap:10px; }
+.funnel-label { font-family:var(--font-mono); font-size:9px; color:var(--muted); width:110px; }
+.funnel-track { flex:1; height:18px; background:var(--surface2); border-radius:3px; overflow:hidden; }
+.funnel-fill { height:100%; border-radius:3px; display:flex; align-items:center; padding-left:8px; font-family:var(--font-mono); font-size:9px; color:rgba(255,255,255,0.8); }
+.funnel-pct { width:40px; text-align:right; font-family:var(--font-mono); font-size:9px; }
+
+/* ── TOGGLE FILTER ── */
+.filter-bar { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+.filter-btn { font-family:var(--font-mono); font-size:9px; padding:4px 12px; border-radius:4px; border:1px solid var(--border); color:var(--muted); cursor:pointer; transition:all 0.15s; background:var(--surface2); }
+.filter-btn.active { color:var(--teal-light); border-color:var(--teal-dim); background:rgba(0,123,118,0.1); }
+.filter-btn:hover { color:var(--text); }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══════════════════════════════════════════════════════ SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">Command <em>Center</em></div>
+    <div class="sub">Edgard &amp; Cooper · D2C EU</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Overview</div>
+    <div class="nav-item active" onclick="nav('home')">
+      <span class="nav-icon">⬡</span> Command Center <span class="nav-level">HOME</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">L1 · Revenue</div>
+    <div class="nav-item" onclick="nav('income')">
+      <span class="nav-icon">€</span> Income Statement <span class="nav-level">L1</span>
+    </div>
+    <div class="nav-item" onclick="nav('yoy-sales')">
+      <span class="nav-icon">↑</span> YoY Sales Momentum <span class="nav-level">L1</span>
+    </div>
+    <div class="nav-item" onclick="nav('targets')">
+      <span class="nav-icon">⊙</span> Actuals vs Targets <span class="nav-level">L1</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">L2A · Retention</div>
+    <div class="nav-item" onclick="nav('sub-status')">
+      <span class="nav-icon">◉</span> Subscription Status <span class="nav-level">L2A</span>
+    </div>
+    <div class="nav-item" onclick="nav('loop-cancel')">
+      <span class="nav-icon">✕</span> Loop Cancellations <span class="nav-level">L2A</span>
+    </div>
+    <div class="nav-item" onclick="nav('retention-pacing')">
+      <span class="nav-icon">⟳</span> Retention Pacing <span class="nav-level">L2A</span>
+    </div>
+    <div class="nav-item" onclick="nav('northstars')">
+      <span class="nav-icon">★</span> Northstars <span class="nav-level">L2A</span>
+    </div>
+    <div class="nav-item" onclick="nav('early-retention')">
+      <span class="nav-icon">◎</span> Early Retention <span class="nav-level">L2A</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">L2B · Acquisition</div>
+    <div class="nav-item" onclick="nav('yoy-nc')">
+      <span class="nav-icon">↗</span> YoY NC Momentum <span class="nav-level">L2B</span>
+    </div>
+    <div class="nav-item" onclick="nav('activation-funnel')">
+      <span class="nav-icon">▽</span> Activation Funnel <span class="nav-level">L2B</span>
+    </div>
+    <div class="nav-item" onclick="nav('acq-codes')">
+      <span class="nav-icon">⌗</span> Acquisition Codes <span class="nav-level">L2B</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">L2C · Quality</div>
+    <div class="nav-item" onclick="nav('clr')">
+      <span class="nav-icon">∞</span> CLR Evolution <span class="nav-level">L2C</span>
+    </div>
+    <div class="nav-item" onclick="nav('aov')">
+      <span class="nav-icon">⬡</span> AOV Dashboard <span class="nav-level">L2C</span>
+    </div>
+    <div class="nav-item" onclick="nav('csat')">
+      <span class="nav-icon">♡</span> CSAT / Surveys <span class="nav-level">L2C</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">L3 · Operations</div>
+    <div class="nav-item" onclick="nav('otif')">
+      <span class="nav-icon">⟴</span> OTIF Dashboard <span class="nav-level">L3</span>
+    </div>
+    <div class="nav-item" onclick="nav('discounts')">
+      <span class="nav-icon">%</span> Discount Orders <span class="nav-level">L3</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════ MAIN -->
+<div class="content">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="back-btn" id="back-btn" onclick="nav('home')">← Back to Command Center</div>
+      <div class="page-title" id="page-title"><span>Command Center</span> · All dashboards</div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-dot"></div>
+      <div class="topbar-meta">Last refresh: 19 Feb 2026 · 18:00</div>
+      <div class="period-badge">Feb 2026 MTD</div>
+    </div>
+  </div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: HOME -->
+<div class="view active" id="view-home">
+
+  <div class="divider-label">
+    <span>Level 1 — Are we on track?</span>
+    <div class="divider-line"></div>
+    <span>Primary signal. Always check here first.</span>
+  </div>
+
+  <!-- ROW 1 · REVENUE PULSE -->
+  <div class="section section--revenue">
+    <div class="section-label">
+      <span class="section-number">01 · Revenue Pulse</span>
+      <div class="section-title">Are we<br>on track?</div>
+      <div class="section-sub">Net revenue vs target and last year. The starting point for every conversation.</div>
+      <div class="drill-tags">
+        <span class="drill-link" onclick="nav('income')">↗ Income Statement</span>
+        <span class="drill-link" onclick="nav('targets')">↗ Actuals vs Target</span>
+      </div>
+    </div>
+    <div class="tile">
+      <div class="annotation">MTD</div>
+      <div class="tile-label">Net Sales — Month to Date</div>
+      <div class="tile-value lg">€1.9M</div>
+      <div class="tile-delta delta--down">▼ −7.1% vs target</div>
+      <div class="tile-context">LY same point: <strong>€2.0M</strong> · Gap: <strong>€143K</strong></div>
+      <div class="spark">
+        <div class="spark-bar" style="height:55%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:60%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:58%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:72%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:65%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:68%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:55%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:50%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:47%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:53%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:63%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:70%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:78%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:82%;background:var(--teal-dim)"></div><div class="spark-bar" style="height:68%;background:var(--teal-light);opacity:0.8"></div><div class="spark-bar" style="height:60%;background:var(--teal-light);opacity:0.8"></div>
+      </div>
+      <div class="drill-tags"><span class="drill-chip" onclick="nav('yoy-sales')">by market</span><span class="drill-chip" onclick="nav('income')">new vs returning</span></div>
+    </div>
+    <div class="tile">
+      <div class="annotation">FCST</div>
+      <div class="tile-label">Full Month Forecast</div>
+      <div class="tile-value">€2.9M</div>
+      <div class="tile-delta delta--down">▼ −4.8% vs budget €3.1M</div>
+      <div class="market-bars">
+        <div class="market-row"><span class="market-name">FR</span><div class="market-track"><div class="market-fill g" style="width:89%"></div></div><span class="market-pct" style="color:var(--green)">+4%</span></div>
+        <div class="market-row"><span class="market-name">BELUX</span><div class="market-track"><div class="market-fill a" style="width:70%"></div></div><span class="market-pct" style="color:var(--amber)">−8%</span></div>
+        <div class="market-row"><span class="market-name">NL</span><div class="market-track"><div class="market-fill r" style="width:58%"></div></div><span class="market-pct" style="color:var(--red)">−14%</span></div>
+        <div class="market-row"><span class="market-name">IT</span><div class="market-track"><div class="market-fill" style="width:78%"></div></div><span class="market-pct">+1%</span></div>
+        <div class="market-row"><span class="market-name">IBERIA</span><div class="market-track"><div class="market-fill a" style="width:66%"></div></div><span class="market-pct" style="color:var(--amber)">−9%</span></div>
+      </div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">Subscription vs OTP Split</div>
+      <div class="tile-value md">47% sub</div>
+      <div class="tile-delta delta--down">▼ −3pp vs LY</div>
+      <div class="tile-context">A declining sub share means more volatile, lower-margin revenue going forward.</div>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px"><span style="color:var(--teal-light)">Subscription</span><span>€1.37M</span></div>
+        <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:47%;height:100%;background:var(--teal);border-radius:4px"></div></div>
+        <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px"><span style="color:var(--muted)">One-Time Purchase</span><span>€1.53M</span></div>
+      </div>
+      <div class="drill-tags"><span class="drill-link" onclick="nav('income')">↗ Financial Dashboard</span></div>
+    </div>
+  </div>
+
+  <div class="divider-label">
+    <span>Level 2A — Retention tree</span><div class="divider-line"></div>
+    <span>Bulk of business. Diagnose when revenue is off.</span>
+  </div>
+
+  <!-- ROW 2 · SUBSCRIBER HEALTH -->
+  <div class="section section--retention">
+    <div class="section-label">
+      <span class="section-number">02 · Subscriber Health</span>
+      <div class="section-title">Are we keeping<br>customers?</div>
+      <div class="section-sub">The engine of D2C. The delta is your net subscriber growth rate.</div>
+      <div class="drill-tags">
+        <span class="drill-link" onclick="nav('sub-status')">↗ Subscription Status</span>
+        <span class="drill-link" onclick="nav('loop-cancel')">↗ Loop Cancellations</span>
+      </div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">Active Subscribers</div>
+      <div class="tile-value lg">16,769</div>
+      <div class="tile-delta delta--up">▲ +677 net this month</div>
+      <div class="tile-context">Started: <strong>3,821</strong> · Cancelled: <strong>3,144</strong> · Paused: <strong>738</strong></div>
+      <div class="spark" style="height:28px">
+        <div class="spark-bar" style="height:65%;background:var(--green);opacity:0.4"></div><div class="spark-bar" style="height:72%;background:var(--green);opacity:0.5"></div><div class="spark-bar" style="height:78%;background:var(--green);opacity:0.6"></div><div class="spark-bar" style="height:82%;background:var(--green);opacity:0.6"></div><div class="spark-bar" style="height:88%;background:var(--green);opacity:0.7"></div><div class="spark-bar" style="height:92%;background:var(--green);opacity:0.8"></div><div class="spark-bar" style="height:95%;background:var(--green);opacity:0.9"></div><div class="spark-bar" style="height:100%;background:var(--green)"></div>
+      </div>
+      <div class="drill-tags"><span class="drill-chip" onclick="nav('sub-status')">by market</span><span class="drill-chip" onclick="nav('sub-status')">by frequency</span></div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">Monthly Churn Rate</div>
+      <div class="tile-value">5.9%</div>
+      <div class="tile-delta delta--warn">▲ +0.4pp vs LY</div>
+      <div class="tile-context">Zero-day churn: <strong>13.1%</strong> of all cancellations</div>
+      <div class="reason-list">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:2px">Top cancel reasons</div>
+        <div class="reason-row"><span class="reason-name">price</span><div class="reason-bar"><div class="reason-fill" style="width:100%;background:var(--red)"></div></div><span class="reason-pct">31%</span></div>
+        <div class="reason-row"><span class="reason-name">delivery</span><div class="reason-bar"><div class="reason-fill" style="width:65%;background:var(--amber)"></div></div><span class="reason-pct">20%</span></div>
+        <div class="reason-row"><span class="reason-name">product dislike</span><div class="reason-bar"><div class="reason-fill" style="width:48%;background:var(--red)"></div></div><span class="reason-pct">15%</span></div>
+        <div class="reason-row"><span class="reason-name">loss of pet</span><div class="reason-bar"><div class="reason-fill" style="width:32%;background:var(--muted)"></div></div><span class="reason-pct">10%</span></div>
+      </div>
+      <div class="drill-tags"><span class="drill-link" onclick="nav('loop-cancel')">↗ Loop Cancellations</span><span class="drill-link" onclick="nav('otif')">↗ OTIF →</span></div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">Retention Pacing — 2nd Order CVR</div>
+      <div class="tile-value md" style="color:var(--amber)">Tracking below</div>
+      <div class="tile-delta delta--warn">Recent cohorts below H1 2025 curve</div>
+      <div class="cohort-rows" style="margin-top:10px">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px">90-day 2nd order CVR by cohort</div>
+        <div class="cohort-row"><span class="cohort-name">Jan '25</span><div class="cohort-track"><div class="cohort-fill" style="width:87%;background:var(--green)"></div></div><span class="cohort-val" style="color:var(--green)">27%</span></div>
+        <div class="cohort-row"><span class="cohort-name">May '25</span><div class="cohort-track"><div class="cohort-fill" style="width:75%;background:var(--green)"></div></div><span class="cohort-val" style="color:var(--green)">23%</span></div>
+        <div class="cohort-row"><span class="cohort-name">Sep '25</span><div class="cohort-track"><div class="cohort-fill" style="width:55%;background:var(--amber)"></div></div><span class="cohort-val" style="color:var(--amber)">17%</span></div>
+        <div class="cohort-row"><span class="cohort-name">Nov '25</span><div class="cohort-track"><div class="cohort-fill" style="width:42%;background:var(--amber)"></div></div><span class="cohort-val" style="color:var(--amber)">13%</span></div>
+        <div class="cohort-row"><span class="cohort-name">Jan '26</span><div class="cohort-track"><div class="cohort-fill" style="width:24%;background:var(--red)"></div></div><span class="cohort-val" style="color:var(--red)">7%*</span></div>
+      </div>
+      <div class="drill-tags"><span class="drill-link" onclick="nav('retention-pacing')">↗ Retention Pacing</span><span class="drill-link" onclick="nav('northstars')">↗ Northstars</span></div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">% First Orders on Subscription</div>
+      <div class="tile-value" style="color:var(--red)">16.4%</div>
+      <div class="tile-delta delta--down">▼ −9pp vs Jan 2025 (25.6%)</div>
+      <div class="tile-context">Leading indicator. Sub starters retain at 3–4× OTP. Structural decline since Aug '25 will compound into churn over next 3–6 months.</div>
+      <div class="spark" style="margin-top:8px">
+        <div class="spark-bar" style="height:80%;background:var(--green);opacity:0.7"></div><div class="spark-bar" style="height:82%;background:var(--green);opacity:0.7"></div><div class="spark-bar" style="height:78%;background:var(--green);opacity:0.7"></div><div class="spark-bar" style="height:72%;background:var(--amber);opacity:0.6"></div><div class="spark-bar" style="height:75%;background:var(--amber);opacity:0.6"></div><div class="spark-bar" style="height:82%;background:var(--amber);opacity:0.7"></div><div class="spark-bar" style="height:65%;background:var(--amber);opacity:0.7"></div><div class="spark-bar" style="height:58%;background:var(--red);opacity:0.7"></div><div class="spark-bar" style="height:52%;background:var(--red);opacity:0.7"></div><div class="spark-bar" style="height:48%;background:var(--red);opacity:0.7"></div><div class="spark-bar" style="height:50%;background:var(--red);opacity:0.8"></div><div class="spark-bar" style="height:52%;background:var(--red);opacity:0.8"></div>
+      </div>
+      <div class="pill pill--red" style="margin-top:4px"><div class="pill-dot"></div> Needs attention</div>
+      <div class="drill-tags"><span class="drill-link" onclick="nav('early-retention')">↗ Early Retention</span><span class="drill-link" onclick="nav('acq-codes')">↗ Acquisition Codes</span></div>
+    </div>
+  </div>
+
+  <div class="divider-label">
+    <span>Level 2B — Acquisition tree</span><div class="divider-line"></div>
+    <span>Growth lever. Quality of NCs determines future retention.</span>
+  </div>
+
+  <!-- ROW 3 · ACQUISITION -->
+  <div class="section section--acquisition">
+    <div class="section-label">
+      <span class="section-number">03 · Acquisition</span>
+      <div class="section-title">Are we bringing<br>in quality NCs?</div>
+      <div class="section-sub">Volume matters less than quality. A NC on subscription is worth 3–4× one on OTP.</div>
+      <div class="drill-tags">
+        <span class="drill-link" onclick="nav('yoy-nc')">↗ YoY NC Momentum</span>
+        <span class="drill-link" onclick="nav('activation-funnel')">↗ Activation Funnel</span>
+      </div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">New Customers — MTD</div>
+      <div class="tile-value lg">3,585</div>
+      <div class="tile-delta delta--down">▼ −46% vs Jan '25 (6,481)</div>
+      <div class="tile-context">February is partial. January cohort was 7,712.</div>
+      <div class="market-bars" style="margin-top:10px">
+        <div class="market-row"><span class="market-name">FR</span><div class="market-track"><div class="market-fill g" style="width:85%"></div></div><span class="market-pct" style="color:var(--green)">+6%</span></div>
+        <div class="market-row"><span class="market-name">BELUX</span><div class="market-track"><div class="market-fill a" style="width:60%"></div></div><span class="market-pct" style="color:var(--amber)">−14%</span></div>
+        <div class="market-row"><span class="market-name">NL</span><div class="market-track"><div class="market-fill r" style="width:48%"></div></div><span class="market-pct" style="color:var(--red)">−28%</span></div>
+      </div>
+      <div class="drill-tags"><span class="drill-chip" onclick="nav('yoy-nc')">by market</span><span class="drill-chip" onclick="nav('yoy-nc')">dog vs cat</span></div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">Activation Funnel — New Visitors</div>
+      <div class="tile-value md">6.5% CVR</div>
+      <div class="tile-delta delta--down">▼ vs 7.8% Jan '25</div>
+      <div class="funnel" style="margin-top:12px">
+        <div class="funnel-step"><span class="funnel-label">Visit</span><div class="funnel-track"><div class="funnel-fill" style="width:100%;background:var(--teal)">76K</div></div><span class="funnel-pct">100%</span></div>
+        <div class="funnel-step"><span class="funnel-label">Product Viewed</span><div class="funnel-track"><div class="funnel-fill" style="width:68%;background:var(--teal);opacity:0.8">68%</div></div><span class="funnel-pct">68%</span></div>
+        <div class="funnel-step"><span class="funnel-label">Add to Cart</span><div class="funnel-track"><div class="funnel-fill" style="width:15%;background:var(--amber)">14.7</div></div><span class="funnel-pct">14.7%</span></div>
+        <div class="funnel-step"><span class="funnel-label">Checkout Started</span><div class="funnel-track"><div class="funnel-fill" style="width:8%;background:var(--amber)">7.4</div></div><span class="funnel-pct">7.4%</span></div>
+        <div class="funnel-step"><span class="funnel-label">Order Complete</span><div class="funnel-track"><div class="funnel-fill" style="width:6.5%;background:var(--teal-light)">6.5</div></div><span class="funnel-pct" style="color:var(--teal-light)">6.5%</span></div>
+      </div>
+      <div class="drill-tags"><span class="drill-link" onclick="nav('activation-funnel')">↗ Full Funnel Dashboard</span></div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">Avg CPA &amp; Discount Quality</div>
+      <div class="tile-value md">€44.5 CPA</div>
+      <div class="tile-delta delta--warn">▲ +3.7% vs LY</div>
+      <div class="tile-context">First order discount depth: <strong>24.7%</strong> avg. High-discount NCs have lower 2nd order CVR.</div>
+      <div class="cohort-rows" style="margin-top:10px">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px">Acq. code groups · CVR quality</div>
+        <div class="cohort-row"><span class="cohort-name" style="width:80px">BIO-PROMO</span><div class="cohort-track"><div class="cohort-fill" style="width:88%;background:var(--green)"></div></div><span class="cohort-val" style="color:var(--green)">high</span></div>
+        <div class="cohort-row"><span class="cohort-name" style="width:80px">WELCOME</span><div class="cohort-track"><div class="cohort-fill" style="width:70%;background:var(--teal)"></div></div><span class="cohort-val">med</span></div>
+        <div class="cohort-row"><span class="cohort-name" style="width:80px">CONTENT CR.</span><div class="cohort-track"><div class="cohort-fill" style="width:40%;background:var(--amber)"></div></div><span class="cohort-val" style="color:var(--amber)">low</span></div>
+      </div>
+      <div class="drill-tags"><span class="drill-link" onclick="nav('acq-codes')">↗ Acquisition Code Perf.</span></div>
+    </div>
+  </div>
+
+  <div class="divider-label">
+    <span>Level 2C — Retention quality</span><div class="divider-line"></div>
+    <span>What is the value of the customers we keep?</span>
+  </div>
+
+  <!-- ROW 4 · RETENTION QUALITY -->
+  <div class="section section--quality">
+    <div class="section-label">
+      <span class="section-number">04 · Retention Quality</span>
+      <div class="section-title">What are<br>customers worth?</div>
+      <div class="section-sub">AOV and basket evolution for returning customers. CLR links retention to revenue.</div>
+      <div class="drill-tags">
+        <span class="drill-link" onclick="nav('aov')">↗ AOV Dashboard</span>
+        <span class="drill-link" onclick="nav('clr')">↗ CLR Evolution</span>
+      </div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">AOV — Returning Customers</div>
+      <div class="tile-value">€72.3</div>
+      <div class="tile-delta delta--up">▲ +0.8% vs LY</div>
+      <div class="tile-context">Sub basket: <strong>€71.7</strong> avg · NC AOV: <strong>€50.8</strong></div>
+      <div class="drill-tags"><span class="drill-link" onclick="nav('aov')">↗ AOV by product range</span></div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">CLR — Sub vs OTP</div>
+      <div class="tile-value md">5.2 orders avg</div>
+      <div class="tile-delta delta--up">▲ Sub CLR 3.8× vs OTP</div>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+        <div><div style="font-family:var(--font-mono);font-size:9px;color:var(--teal-light);margin-bottom:4px">Subscription</div><div style="font-size:20px;font-family:var(--font-display);font-weight:600">5.2 orders · 34 days apart</div></div>
+        <div style="border-top:1px solid var(--border);padding-top:8px"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-bottom:4px">OTP</div><div style="font-size:20px;font-family:var(--font-display);font-weight:600;color:var(--muted)">1.4 orders avg</div></div>
+      </div>
+      <div class="drill-tags"><span class="drill-link" onclick="nav('clr')">↗ CLR Evolution</span></div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">CSAT — Subscription Touchpoint</div>
+      <div class="tile-value">74 / 100</div>
+      <div class="tile-delta delta--warn">▼ −3pts vs last quarter</div>
+      <div class="tile-context">Brand churn intent: <strong>5.9%</strong> won't buy E&amp;C again. FR: 4.5% · NL: 4.8% · BELUX: 3.7%</div>
+      <div class="drill-tags"><span class="drill-link" onclick="nav('csat')">↗ CSAT &amp; Surveys</span></div>
+    </div>
+  </div>
+
+  <div class="divider-label">
+    <span>Level 3 — Operational blockers</span><div class="divider-line"></div>
+    <span>Check only when L2 signals are unexplained. Root causes, not KPIs.</span>
+  </div>
+
+  <!-- ROW 5 · OPS RISK -->
+  <div class="section section--ops" style="border-bottom:none">
+    <div class="section-label">
+      <span class="section-number">05 · Ops Risk</span>
+      <div class="section-title">What's<br>blocking us?</div>
+      <div class="section-sub">Delivery and stock failures are churn triggers. Surface when retention dips unexpectedly.</div>
+      <div class="drill-tags"><span class="drill-link" onclick="nav('otif')">↗ OTIF Dashboard</span></div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">OTIF — On Time In Full</div>
+      <div class="tile-value" style="color:var(--amber)">80.0%</div>
+      <div class="tile-delta delta--warn">Target: 95% · Gap: −15pp</div>
+      <div style="margin-top:10px;display:flex;gap:10px">
+        <div style="flex:1;background:var(--surface2);border-radius:6px;padding:10px;border:1px solid var(--border)"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-bottom:4px">On Time</div><div style="font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--amber)">80%</div><div style="font-size:9px;color:var(--muted)">Target: 95.6%</div></div>
+        <div style="flex:1;background:var(--surface2);border-radius:6px;padding:10px;border:1px solid var(--border)"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-bottom:4px">In Full</div><div style="font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--green)">100%</div><div style="font-size:9px;color:var(--muted)">Target: 96.3%</div></div>
+      </div>
+      <div class="pill pill--red" style="margin-top:8px"><div class="pill-dot"></div> Critical — cross-ref vs churn reasons</div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">Discount Depth — Margin Risk</div>
+      <div class="tile-value md">19.0% avg</div>
+      <div class="tile-delta delta--warn">▲ +1.2pp vs LY on first orders</div>
+      <div class="tile-context">High discount on first order → lower 2nd order CVR. CONTENT CREATOR codes: highest volume, lowest retention.</div>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:2px">Disc. % vs 2nd order CVR</div>
+        <div style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:9px"><span style="color:var(--muted);width:70px">0–10% disc.</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:85%;height:100%;background:var(--green);border-radius:3px"></div></div><span style="color:var(--green)">CVR 34%</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:9px"><span style="color:var(--muted);width:70px">10–20% disc.</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:60%;height:100%;background:var(--amber);border-radius:3px"></div></div><span style="color:var(--amber)">CVR 24%</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:9px"><span style="color:var(--muted);width:70px">20%+ disc.</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:38%;height:100%;background:var(--red);border-radius:3px"></div></div><span style="color:var(--red)">CVR 15%</span></div>
+      </div>
+      <div class="drill-tags"><span class="drill-link" onclick="nav('discounts')">↗ Discount Orders</span><span class="drill-link" onclick="nav('acq-codes')">↗ Acq. Codes</span></div>
+    </div>
+    <div class="tile" style="background:rgba(224,82,82,0.03);border-left:1px solid rgba(224,82,82,0.15)">
+      <div class="tile-label" style="color:var(--red)">⚠ Active Signals — Feb 2026</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+        <div class="signal-box red"><div class="signal-label red">CRITICAL</div><div class="signal-text">% first orders on subscription down −9pp YoY. Will compound into churn in 3–6 months.</div></div>
+        <div class="signal-box amber"><div class="signal-label amber">WATCH</div><div class="signal-text">OTIF on-time 80% vs 95% target. Delivery is #2 cancel reason — cross-check timing.</div></div>
+        <div class="signal-box amber"><div class="signal-label amber">WATCH</div><div class="signal-text">NC cohorts Sep–Jan tracking below H1 2025 pacing curves.</div></div>
+        <div class="signal-box green"><div class="signal-label green">POSITIVE</div><div class="signal-text">Active subscriber base still growing (+677 delta). AOV returning customers stable at €72.</div></div>
+      </div>
+    </div>
+  </div>
+</div><!-- /view-home -->
+
+
+<!-- ══════════════════════════════════════════════════════ VIEW: SUBSCRIPTION STATUS -->
+<div class="view" id="view-sub-status">
+  <div class="dash-header">
+    <h2>Subscription <em>Status</em></h2>
+    <p>Full subscriber base health — active, paused, cancelled, delta. Source: Loop subscription system.</p>
+  </div>
+  <div class="dash-grid dash-grid--4" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>Active Subscribers</h3><div class="kpi-big" style="color:var(--green)">16,769</div><div class="tile-delta delta--up" style="margin-top:4px">▲ +677 net delta this month</div></div>
+    <div class="dash-card"><h3>Started This Month</h3><div class="kpi-big">3,821</div><div class="tile-delta delta--warn" style="margin-top:4px">▼ −12% vs Jan '26 (4,341)</div></div>
+    <div class="dash-card"><h3>Cancelled This Month</h3><div class="kpi-big" style="color:var(--red)">3,144</div><div class="tile-delta delta--down" style="margin-top:4px">▲ +8% vs Jan '26 (2,909)</div></div>
+    <div class="dash-card"><h3>Paused This Month</h3><div class="kpi-big" style="color:var(--amber)">738</div><div class="tile-context" style="margin-top:4px">Paused ≠ lost — ~40% reactivate within 60 days</div></div>
+  </div>
+  <div class="section-pad">
+    <h3>Subscription Status by Month — Running Total</h3>
+    <div class="bar-chart" style="height:140px;align-items:flex-end;gap:12px">
+      <div class="bar-col"><div class="bar" style="height:60%;background:var(--teal-dim)"></div><div class="bar-label">Jul</div></div>
+      <div class="bar-col"><div class="bar" style="height:68%;background:var(--teal-dim)"></div><div class="bar-label">Aug</div></div>
+      <div class="bar-col"><div class="bar" style="height:74%;background:var(--teal-dim)"></div><div class="bar-label">Sep</div></div>
+      <div class="bar-col"><div class="bar" style="height:78%;background:var(--teal-dim)"></div><div class="bar-label">Oct</div></div>
+      <div class="bar-col"><div class="bar" style="height:82%;background:var(--teal-dim)"></div><div class="bar-label">Nov</div></div>
+      <div class="bar-col"><div class="bar" style="height:86%;background:var(--teal-dim)"></div><div class="bar-label">Dec</div></div>
+      <div class="bar-col"><div class="bar" style="height:88%;background:var(--teal-dim)"></div><div class="bar-label">Jan</div></div>
+      <div class="bar-col"><div class="bar" style="height:90%;background:var(--teal-light)"></div><div class="bar-label">Feb</div></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)">
+    <div class="section-pad" style="background:var(--bg)">
+      <h3>Monthly Delta Table</h3>
+      <table class="data-table">
+        <thead><tr><th>Month</th><th>Started</th><th>Cancelled</th><th>Paused</th><th>Delta</th></tr></thead>
+        <tbody>
+          <tr><td>Sep '25</td><td>3,429</td><td>2,923</td><td>921</td><td class="td-green">+506</td></tr>
+          <tr><td>Oct '25</td><td>2,635</td><td>2,987</td><td>891</td><td class="td-red">−352</td></tr>
+          <tr><td>Nov '25</td><td>2,875</td><td>2,714</td><td>877</td><td class="td-green">+161</td></tr>
+          <tr><td>Dec '25</td><td>1,935</td><td>1,813</td><td>847</td><td class="td-green">+122</td></tr>
+          <tr><td>Jan '26</td><td>2,590</td><td>1,895</td><td>870</td><td class="td-green">+695</td></tr>
+          <tr><td>Feb '26</td><td>3,821</td><td>3,144</td><td>738</td><td class="td-green">+677</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section-pad" style="background:var(--bg)">
+      <h3>Active Subscribers by Market</h3>
+      <table class="data-table">
+        <thead><tr><th>Market</th><th>Active</th><th>Delta MoM</th><th>Churn %</th></tr></thead>
+        <tbody>
+          <tr><td>FR</td><td>6,244</td><td class="td-green">+312</td><td>4.8%</td></tr>
+          <tr><td>BELUX</td><td>3,891</td><td class="td-green">+104</td><td>5.4%</td></tr>
+          <tr><td>NL</td><td>2,817</td><td class="td-red">−88</td><td>7.2%</td></tr>
+          <tr><td>IT</td><td>1,944</td><td class="td-green">+211</td><td>4.1%</td></tr>
+          <tr><td>IBERIA</td><td>1,101</td><td class="td-green">+72</td><td>5.9%</td></tr>
+          <tr><td>DACH</td><td>772</td><td class="td-amber">+66</td><td>6.3%</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;padding:10px;background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.2);border-radius:6px;font-size:10px;color:var(--text)">⚠ NL is the only market with a negative delta. Cross-reference with NL OTIF performance and cancellation reasons.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: LOOP CANCELLATIONS -->
+<div class="view" id="view-loop-cancel">
+  <div class="dash-header">
+    <h2>Loop <em>Cancellations</em></h2>
+    <p>Why customers cancel and when. Zero-day churn is a separate, acute signal. Source: Loop subscription system.</p>
+  </div>
+  <div class="dash-grid dash-grid--3" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>Total Cancellations — MTD</h3><div class="kpi-big" style="color:var(--red)">3,144</div><div class="tile-delta delta--down" style="margin-top:4px">▲ +8% vs Jan '26</div></div>
+    <div class="dash-card"><h3>Zero-Day Churn</h3><div class="kpi-big" style="color:var(--amber)">13.1%</div><div class="tile-context" style="margin-top:4px">413 subscribers cancelled within 1 day of creation. Likely payment or expectation mismatch.</div></div>
+    <div class="dash-card"><h3>Avg Days to Cancel</h3><div class="kpi-big">47 days</div><div class="tile-context" style="margin-top:4px">Customers surviving 60+ days cancel at 3× lower rate.</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)">
+    <div class="section-pad" style="background:var(--bg)">
+      <h3>Cancellation Reasons — Feb 2026</h3>
+      <table class="data-table">
+        <thead><tr><th>Reason</th><th>Count</th><th>% Total</th><th>MoM</th></tr></thead>
+        <tbody>
+          <tr><td>Price</td><td>974</td><td>31%</td><td class="td-amber">▲ +3pp</td></tr>
+          <tr><td>Delivery issue</td><td>629</td><td>20%</td><td class="td-red">▲ +5pp ⚠</td></tr>
+          <tr><td>Product dislike</td><td>472</td><td>15%</td><td class="td-muted">stable</td></tr>
+          <tr><td>Loss of pet</td><td>314</td><td>10%</td><td class="td-muted">stable</td></tr>
+          <tr><td>Cancelled by admin</td><td>220</td><td>7%</td><td class="td-muted">stable</td></tr>
+          <tr><td>Changed brand</td><td>188</td><td>6%</td><td class="td-muted">stable</td></tr>
+          <tr><td>Other / blank</td><td>347</td><td>11%</td><td class="td-muted">—</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:14px;padding:12px;background:rgba(224,82,82,0.07);border:1px solid rgba(224,82,82,0.2);border-radius:6px">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--red);margin-bottom:5px">⚠ DELIVERY SIGNAL</div>
+        <div style="font-size:11px;line-height:1.6">Delivery cancellations rose +5pp this month, coinciding with OTIF on-time dropping to 80%. Cross-reference: <span style="color:var(--teal-light);cursor:pointer" onclick="nav('otif')">→ OTIF Dashboard</span></div>
+      </div>
+    </div>
+    <div class="section-pad" style="background:var(--bg)">
+      <h3>Cancellations by Market</h3>
+      <table class="data-table">
+        <thead><tr><th>Market</th><th>Cancellations</th><th>% Delivery reason</th><th>Zero-day %</th></tr></thead>
+        <tbody>
+          <tr><td>FR</td><td>812</td><td>16%</td><td>11%</td></tr>
+          <tr><td>BELUX</td><td>614</td><td>18%</td><td>13%</td></tr>
+          <tr><td>NL</td><td>721</td><td class="td-red">31% ⚠</td><td class="td-red">19%</td></tr>
+          <tr><td>IT</td><td>441</td><td>15%</td><td>12%</td></tr>
+          <tr><td>IBERIA</td><td>368</td><td>22%</td><td>14%</td></tr>
+          <tr><td>DACH</td><td>188</td><td>17%</td><td>10%</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:14px;font-size:11px;color:var(--muted);line-height:1.6">NL has disproportionately high delivery-related cancellations (31% vs 20% avg). This is the primary driver of NL's negative subscriber delta this month.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: RETENTION PACING -->
+<div class="view" id="view-retention-pacing">
+  <div class="dash-header">
+    <h2>Retention <em>Pacing</em></h2>
+    <p>How quickly each monthly acquisition cohort places their second order. Curves that ramp faster = healthier retention.</p>
+  </div>
+  <div class="dash-grid dash-grid--3" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>Best Recent Cohort (90-day)</h3><div class="kpi-big" style="color:var(--green)">Jan '25 · 27%</div><div class="tile-context" style="margin-top:4px">Highest 90-day 2nd order rate in 2025</div></div>
+    <div class="dash-card"><h3>Most Recent Full Cohort</h3><div class="kpi-big" style="color:var(--amber)">Nov '25 · 13%</div><div class="tile-context" style="margin-top:4px">Significantly below Jan '25 benchmark at same age</div></div>
+    <div class="dash-card"><h3>Jan '26 Cohort (early)</h3><div class="kpi-big" style="color:var(--red)">7% so far</div><div class="tile-context" style="margin-top:4px">Only 11% of 90-day window elapsed. Too early to call, but pacing low.</div></div>
+  </div>
+  <div class="section-pad">
+    <h3>90-Day 2nd Order CVR by Acquisition Cohort</h3>
+    <div class="bar-chart" style="height:160px;gap:14px;margin-top:8px">
+      <div class="bar-col"><div class="bar" style="height:87%;background:var(--green)"></div><div class="bar-val" style="color:var(--green)">27%</div><div class="bar-label">Jan'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:78%;background:var(--green)"></div><div class="bar-val" style="color:var(--green)">24%</div><div class="bar-label">Feb'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:75%;background:var(--green)"></div><div class="bar-val">23%</div><div class="bar-label">Mar'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:72%;background:var(--green)"></div><div class="bar-val">22%</div><div class="bar-label">Apr'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:75%;background:var(--green)"></div><div class="bar-val">23%</div><div class="bar-label">May'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:72%;background:var(--teal)"></div><div class="bar-val">22%</div><div class="bar-label">Jun'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:68%;background:var(--teal)"></div><div class="bar-val">21%</div><div class="bar-label">Jul'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:65%;background:var(--amber)"></div><div class="bar-val" style="color:var(--amber)">20%</div><div class="bar-label">Aug'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:55%;background:var(--amber)"></div><div class="bar-val" style="color:var(--amber)">17%</div><div class="bar-label">Sep'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:48%;background:var(--amber)"></div><div class="bar-val" style="color:var(--amber)">15%</div><div class="bar-label">Oct'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:42%;background:var(--amber)"></div><div class="bar-val" style="color:var(--amber)">13%</div><div class="bar-label">Nov'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:36%;background:var(--red)"></div><div class="bar-val" style="color:var(--red)">11%</div><div class="bar-label">Dec'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:24%;background:var(--red)"></div><div class="bar-val" style="color:var(--red)">7%*</div><div class="bar-label">Jan'26</div></div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:8px">* Jan '26 at 11% of 90-day window elapsed — directional only</div>
+  </div>
+  <div class="section-pad" style="border-top:1px solid var(--border)">
+    <h3>Hypothesis: Why is pacing declining?</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:4px">
+      <div class="signal-box amber"><div class="signal-label amber">HYPOTHESIS 1</div><div class="signal-text">Lower % of NCs starting on subscription (16% vs 25% a year ago) → less habit formation on first order → lower re-order rate.</div></div>
+      <div class="signal-box amber"><div class="signal-label amber">HYPOTHESIS 2</div><div class="signal-text">Higher discount on first orders attracting price-sensitive shoppers who don't reorder at full price.</div></div>
+      <div class="signal-box red"><div class="signal-label red">HYPOTHESIS 3</div><div class="signal-text">OTIF failures (80% on-time) creating bad first experiences → customers don't return. Validate vs delivery-related cancel timing.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: NORTHSTARS -->
+<div class="view" id="view-northstars">
+  <div class="dash-header">
+    <h2>D2C <em>Northstars</em></h2>
+    <p>Top-of-funnel cohort metrics tracked monthly. First order CVR, 90-day CLR, and repeat purchase rates by acquisition month.</p>
+  </div>
+  <div class="section-pad">
+    <h3>Monthly Northstar Table — All First Order Cohorts</h3>
+    <table class="data-table">
+      <thead><tr><th>Cohort (month)</th><th># First Orders</th><th>1st→2nd CVR</th><th>2nd→3rd CVR</th><th>90-Day CLR</th><th>180-Day elapsed</th></tr></thead>
+      <tbody>
+        <tr><td>Jan '25</td><td>9,082</td><td class="td-green">27.2%</td><td class="td-green">17.2%</td><td class="td-green">4.11</td><td>100%</td></tr>
+        <tr><td>Feb '25</td><td>9,299</td><td class="td-green">23.8%</td><td>14.7%</td><td>3.89</td><td>100%</td></tr>
+        <tr><td>Mar '25</td><td>8,293</td><td>23.8%</td><td>15.1%</td><td>3.76</td><td>100%</td></tr>
+        <tr><td>Apr '25</td><td>7,469</td><td>24.5%</td><td>16.8%</td><td>3.92</td><td>100%</td></tr>
+        <tr><td>May '25</td><td>8,707</td><td>22.6%</td><td>16.3%</td><td>3.64</td><td>100%</td></tr>
+        <tr><td>Jun '25</td><td>7,767</td><td class="td-amber">18.6%</td><td class="td-amber">13.5%</td><td class="td-amber">3.21</td><td>100%</td></tr>
+        <tr><td>Jul '25</td><td>8,291</td><td class="td-amber">19.1%</td><td class="td-amber">13.5%</td><td class="td-amber">3.18</td><td>96%</td></tr>
+        <tr><td>Aug '25</td><td>7,924</td><td class="td-amber">35.9%</td><td class="td-amber">25.6%</td><td class="td-amber">3.44</td><td>79%</td></tr>
+        <tr><td>Sep '25</td><td>7,582</td><td class="td-amber">34.7%</td><td class="td-amber">21.0%</td><td>—</td><td>62%</td></tr>
+        <tr><td>Oct '25</td><td>7,464</td><td class="td-amber">34.1%</td><td class="td-amber">19.3%</td><td>—</td><td>45%</td></tr>
+        <tr><td>Nov '25</td><td>8,646</td><td class="td-amber">23.6%</td><td>12.8%</td><td>—</td><td>28%</td></tr>
+        <tr><td>Dec '25</td><td>6,481</td><td>23.8%</td><td>8.3%</td><td>—</td><td>11%</td></tr>
+        <tr><td>Jan '26</td><td>7,712</td><td class="td-red">14.6%</td><td class="td-red">2.3%</td><td>—</td><td>3%</td></tr>
+        <tr><td>Feb '26</td><td>3,585</td><td class="td-red">6.5%</td><td class="td-red">0.2%</td><td>—</td><td>MTD</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px;font-size:10px;color:var(--muted)">Note: Feb '26 CVRs are MTD and will increase as the month progresses. Jan '26 at 3% of 180-day window. Treat recent cohorts as directional only.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: EARLY RETENTION -->
+<div class="view" id="view-early-retention">
+  <div class="dash-header">
+    <h2>Early <em>Retention</em> Indicators</h2>
+    <p>The quality of a new customer's first order predicts their long-term value. Watch subscription rate and discount depth.</p>
+  </div>
+  <div class="dash-grid dash-grid--3" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>% First Order on Subscription</h3><div class="kpi-big" style="color:var(--red)">16.4%</div><div class="tile-delta delta--down" style="margin-top:4px">▼ −9pp vs Jan '25 (25.6%)</div><div class="tile-context" style="margin-top:8px">This is the most important early signal. Sub starters retain at 3–4× OTP customers.</div></div>
+    <div class="dash-card"><h3>Avg First Order Discount</h3><div class="kpi-big" style="color:var(--amber)">24.7%</div><div class="tile-context" style="margin-top:4px">Higher discount → lower repeat rate. Benchmark: &lt;15% for healthy retention cohorts.</div></div>
+    <div class="dash-card"><h3>Avg First Order AOV</h3><div class="kpi-big">€50.8</div><div class="tile-delta delta--down" style="margin-top:4px">▼ −€3.2 vs Jan '25</div></div>
+  </div>
+  <div class="section-pad">
+    <h3>% First Orders on Subscription — Monthly Trend</h3>
+    <div class="bar-chart" style="height:140px;gap:12px;margin-top:8px">
+      <div class="bar-col"><div class="bar" style="height:100%;background:var(--green)"></div><div class="bar-val" style="color:var(--green)">25.6%</div><div class="bar-label">Jan'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:58%;background:var(--green)"></div><div class="bar-val">14.9%</div><div class="bar-label">Feb'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:86%;background:var(--green)"></div><div class="bar-val" style="color:var(--green)">22.0%</div><div class="bar-label">Mar'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:85%;background:var(--green)"></div><div class="bar-val" style="color:var(--green)">21.8%</div><div class="bar-label">Apr'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:82%;background:var(--green)"></div><div class="bar-val" style="color:var(--green)">21.0%</div><div class="bar-label">May'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:88%;background:var(--green)"></div><div class="bar-val" style="color:var(--green)">22.7%</div><div class="bar-label">Jun'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:100%;background:var(--green)"></div><div class="bar-val" style="color:var(--green)">25.6%</div><div class="bar-label">Jul'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:96%;background:var(--amber)"></div><div class="bar-val" style="color:var(--amber)">24.7%</div><div class="bar-label">Aug'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:78%;background:var(--amber)"></div><div class="bar-val" style="color:var(--amber)">20.0%</div><div class="bar-label">Sep'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:71%;background:var(--amber)"></div><div class="bar-val" style="color:var(--amber)">18.3%</div><div class="bar-label">Oct'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:62%;background:var(--red)"></div><div class="bar-val" style="color:var(--red)">15.9%</div><div class="bar-label">Nov'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:65%;background:var(--red)"></div><div class="bar-val" style="color:var(--red)">16.8%</div><div class="bar-label">Dec'25</div></div>
+      <div class="bar-col"><div class="bar" style="height:70%;background:var(--red)"></div><div class="bar-val" style="color:var(--red)">18.0%</div><div class="bar-label">Jan'26</div></div>
+      <div class="bar-col"><div class="bar" style="height:64%;background:var(--red)"></div><div class="bar-val" style="color:var(--red)">16.4%</div><div class="bar-label">Feb'26</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: YOY NC -->
+<div class="view" id="view-yoy-nc">
+  <div class="dash-header">
+    <h2>YoY <em>NC Momentum</em></h2>
+    <p>New customer performance vs last year by market, pet type, and CPA. Are we acquiring better or worse than LY?</p>
+  </div>
+  <div class="dash-grid dash-grid--4" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>Total NCs — Jan '26</h3><div class="kpi-big">7,712</div><div class="tile-delta delta--up" style="margin-top:4px">▲ +19% vs Jan '25 (6,481)</div></div>
+    <div class="dash-card"><h3>CPA — Jan '26</h3><div class="kpi-big">€44.5</div><div class="tile-delta delta--warn" style="margin-top:4px">▲ +3.7% vs LY</div></div>
+    <div class="dash-card"><h3>DR Spend — Jan '26</h3><div class="kpi-big">€343K</div><div class="tile-delta delta--up" style="margin-top:4px">▲ +22% vs LY</div></div>
+    <div class="dash-card"><h3>% NC on Subscription</h3><div class="kpi-big" style="color:var(--red)">18.0%</div><div class="tile-delta delta--down" style="margin-top:4px">▼ −7.6pp vs Jan '25</div></div>
+  </div>
+  <div class="section-pad">
+    <h3>New Customers by Market — LY vs TY</h3>
+    <table class="data-table">
+      <thead><tr><th>Market</th><th>LY NCs</th><th>TY NCs</th><th>YoY</th><th>LY CPA</th><th>TY CPA</th><th>CPA YoY</th></tr></thead>
+      <tbody>
+        <tr><td>FR</td><td>1,957</td><td>612</td><td class="td-red">−69%</td><td>€40.7</td><td>€35.3</td><td class="td-green">−13%</td></tr>
+        <tr><td>BELUX</td><td>832</td><td>416</td><td class="td-red">−50%</td><td>€44.9</td><td>€43.8</td><td class="td-green">−2%</td></tr>
+        <tr><td>NL</td><td>1,332</td><td>706</td><td class="td-red">−47%</td><td>€46.8</td><td>€46.2</td><td class="td-amber">−1%</td></tr>
+        <tr><td>DACH</td><td>900</td><td>632</td><td class="td-amber">−30%</td><td>€57.5</td><td>€45.3</td><td class="td-green">−21%</td></tr>
+        <tr><td>IT</td><td>729</td><td>266</td><td class="td-red">−64%</td><td>€38.2</td><td>€45.8</td><td class="td-red">+20%</td></tr>
+        <tr><td>IBERIA</td><td>448</td><td>234</td><td class="td-red">−48%</td><td>€41.2</td><td>€41.3</td><td class="td-muted">+0%</td></tr>
+        <tr style="font-weight:500"><td>Total</td><td>6,449</td><td>3,230</td><td class="td-red">−50%</td><td>€41.5</td><td>€42.3</td><td class="td-amber">+2%</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px;font-size:10px;color:var(--muted)">Note: Feb '26 data is MTD (3,585 NCs). The table above shows Jan '26 full-month vs Jan '25 for fair comparison.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: ACTIVATION FUNNEL -->
+<div class="view" id="view-activation-funnel">
+  <div class="dash-header">
+    <h2>Activation <em>Funnel</em></h2>
+    <p>New visitor journey from first site visit to first order. Bounce, product discovery, cart, checkout, conversion. Source: Website analytics.</p>
+  </div>
+  <div class="dash-grid dash-grid--4" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>New Visitors — MTD</h3><div class="kpi-big">76K</div><div class="tile-delta delta--warn" style="margin-top:4px">▼ −9% vs Jan '26 (84K)</div></div>
+    <div class="dash-card"><h3>Bounce Rate</h3><div class="kpi-big" style="color:var(--amber)">42.1%</div><div class="tile-delta delta--down" style="margin-top:4px">▲ +2pp vs Jan '26</div></div>
+    <div class="dash-card"><h3>First Order CVR</h3><div class="kpi-big" style="color:var(--amber)">6.5%</div><div class="tile-delta delta--down" style="margin-top:4px">▼ vs 7.8% Jan '25</div></div>
+    <div class="dash-card"><h3>Product Viewed %</h3><div class="kpi-big">68%</div><div class="tile-context" style="margin-top:4px">Of unbounced visitors. Stable vs LY.</div></div>
+  </div>
+  <div class="section-pad">
+    <h3>Full Funnel — Feb '26 vs Jan '25 Benchmark</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:8px">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--teal-light);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.1em">Feb '26 (Current)</div>
+        <div class="funnel">
+          <div class="funnel-step"><span class="funnel-label">All New Visitors</span><div class="funnel-track"><div class="funnel-fill" style="width:100%;background:var(--teal)">76,000</div></div><span class="funnel-pct">100%</span></div>
+          <div class="funnel-step"><span class="funnel-label">Unbounced</span><div class="funnel-track"><div class="funnel-fill" style="width:58%;background:var(--teal);opacity:0.85">44K</div></div><span class="funnel-pct">57.9%</span></div>
+          <div class="funnel-step"><span class="funnel-label">Product Viewed</span><div class="funnel-track"><div class="funnel-fill" style="width:52%;background:var(--teal);opacity:0.7">39K</div></div><span class="funnel-pct">68%</span></div>
+          <div class="funnel-step"><span class="funnel-label">Product Added</span><div class="funnel-track"><div class="funnel-fill" style="width:11%;background:var(--amber)">8.3K</div></div><span class="funnel-pct">14.7%</span></div>
+          <div class="funnel-step"><span class="funnel-label">Checkout Started</span><div class="funnel-track"><div class="funnel-fill" style="width:7%;background:var(--amber)">5.6K</div></div><span class="funnel-pct">7.4%</span></div>
+          <div class="funnel-step"><span class="funnel-label">Order Completed</span><div class="funnel-track"><div class="funnel-fill" style="width:5%;background:var(--teal-light)">4.9K</div></div><span class="funnel-pct" style="color:var(--teal-light)">6.5%</span></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.1em">Jan '25 (Benchmark)</div>
+        <div class="funnel">
+          <div class="funnel-step"><span class="funnel-label">All New Visitors</span><div class="funnel-track"><div class="funnel-fill" style="width:100%;background:var(--teal-dim)">197K</div></div><span class="funnel-pct">100%</span></div>
+          <div class="funnel-step"><span class="funnel-label">Unbounced</span><div class="funnel-track"><div class="funnel-fill" style="width:60%;background:var(--teal-dim)">117K</div></div><span class="funnel-pct">59.2%</span></div>
+          <div class="funnel-step"><span class="funnel-label">Product Viewed</span><div class="funnel-track"><div class="funnel-fill" style="width:52%;background:var(--teal-dim)">82K</div></div><span class="funnel-pct">70%</span></div>
+          <div class="funnel-step"><span class="funnel-label">Product Added</span><div class="funnel-track"><div class="funnel-fill" style="width:12%;background:var(--teal-dim)">17.8K</div></div><span class="funnel-pct">17.8%</span></div>
+          <div class="funnel-step"><span class="funnel-label">Checkout Started</span><div class="funnel-track"><div class="funnel-fill" style="width:9%;background:var(--teal-dim)">10.5K</div></div><span class="funnel-pct">8.9%</span></div>
+          <div class="funnel-step"><span class="funnel-label">Order Completed</span><div class="funnel-track"><div class="funnel-fill" style="width:7%;background:var(--teal-dim)">7.8K</div></div><span class="funnel-pct">7.8%</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding:12px;background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.2);border-radius:6px;font-size:11px;line-height:1.6">⚠ The biggest drop vs LY is at <strong>Add to Cart → Checkout</strong> (14.7% vs 17.8%). Product discovery is healthy but something between interest and purchase intent is breaking. Investigate: price presentation, product page trust elements, delivery messaging.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: ACQUISITION CODES -->
+<div class="view" id="view-acq-codes">
+  <div class="dash-header">
+    <h2>Acquisition Code <em>Performance</em></h2>
+    <p>How different discount/campaign codes drive volume, cost, and critically — downstream retention quality.</p>
+  </div>
+  <div class="section-pad">
+    <h3>Code Group Performance — Last 6 Months</h3>
+    <table class="data-table">
+      <thead><tr><th>Code Group</th><th>NC Volume</th><th>Avg Discount %</th><th>Avg CPA</th><th>2nd Order CVR (90d)</th><th>% Sub on 1st order</th><th>Quality Rating</th></tr></thead>
+      <tbody>
+        <tr><td>BIO-PROMO</td><td>12,441</td><td>8%</td><td>€38.2</td><td class="td-green">34%</td><td class="td-green">28%</td><td><span class="pill pill--green"><span class="pill-dot"></span>High</span></td></tr>
+        <tr><td>WELCOME</td><td>18,334</td><td>15%</td><td>€41.7</td><td>26%</td><td>20%</td><td><span class="pill" style="background:rgba(0,123,118,0.1);color:var(--teal-light);border:1px solid var(--teal-dim)"><span class="pill-dot" style="background:var(--teal-light)"></span>Med</span></td></tr>
+        <tr><td>STAR ENDORSER</td><td>8,112</td><td>18%</td><td>€52.1</td><td class="td-amber">22%</td><td class="td-amber">17%</td><td><span class="pill pill--amber"><span class="pill-dot"></span>Med</span></td></tr>
+        <tr><td>OTHER DISCOUNT</td><td>6,891</td><td>20%</td><td>€44.9</td><td class="td-amber">20%</td><td class="td-amber">16%</td><td><span class="pill pill--amber"><span class="pill-dot"></span>Med</span></td></tr>
+        <tr><td>CONTENT CREATOR</td><td>22,183</td><td>25%</td><td>€47.3</td><td class="td-red">15%</td><td class="td-red">11%</td><td><span class="pill pill--red"><span class="pill-dot"></span>Low</span></td></tr>
+        <tr><td>NO DISCOUNT</td><td>4,201</td><td>0%</td><td>€29.1</td><td class="td-green">38%</td><td class="td-green">31%</td><td><span class="pill pill--green"><span class="pill-dot"></span>Highest</span></td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:14px;padding:14px;background:rgba(224,82,82,0.07);border:1px solid rgba(224,82,82,0.2);border-radius:6px">
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--red);margin-bottom:6px">⚠ KEY INSIGHT</div>
+      <div style="font-size:11px;line-height:1.6">CONTENT CREATOR codes drive the highest NC volume (31% of all NCs) but have the lowest retention quality — only 15% 2nd order CVR vs 34% for BIO-PROMO. If CONTENT CREATOR codes drove proportionally fewer NCs over the last 6 months, the % of first orders on subscription would not have declined 9pp. <strong>Recommendation: cap or redirect CONTENT CREATOR spend toward higher-quality sources.</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: CLR -->
+<div class="view" id="view-clr">
+  <div class="dash-header">
+    <h2>CLR <em>Evolution</em></h2>
+    <p>Customer Lifetime Revenue — how much revenue customers generate over their lifetime, split by subscription vs OTP.</p>
+  </div>
+  <div class="dash-grid dash-grid--3" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>Subscription CLR (12-month)</h3><div class="kpi-big" style="color:var(--green)">€374</div><div class="tile-context" style="margin-top:4px">5.2 avg orders · €71.7 avg AOV</div></div>
+    <div class="dash-card"><h3>OTP CLR (12-month)</h3><div class="kpi-big" style="color:var(--muted)">€99</div><div class="tile-context" style="margin-top:4px">1.4 avg orders · €70.7 avg AOV</div></div>
+    <div class="dash-card"><h3>CLR Multiplier</h3><div class="kpi-big">3.8×</div><div class="tile-context" style="margin-top:4px">A subscriber is worth 3.8× a one-time buyer in 12-month revenue. This justifies investment in sub conversion on first order.</div></div>
+  </div>
+  <div class="section-pad">
+    <h3>Avg Orders Placed by Months Since Acquisition — Sub vs OTP</h3>
+    <table class="data-table">
+      <thead><tr><th>Months since acq.</th><th>Sub — Avg Orders</th><th>OTP — Avg Orders</th><th>Multiplier</th><th>Sub — Avg Revenue</th><th>OTP — Avg Revenue</th></tr></thead>
+      <tbody>
+        <tr><td>1 month</td><td>1.8</td><td>1.1</td><td>1.6×</td><td>€129</td><td>€79</td></tr>
+        <tr><td>3 months</td><td>3.1</td><td>1.2</td><td>2.6×</td><td>€222</td><td>€86</td></tr>
+        <tr><td>6 months</td><td>4.4</td><td>1.3</td><td>3.4×</td><td>€315</td><td>€93</td></tr>
+        <tr><td>12 months</td><td class="td-green">5.2</td><td class="td-muted">1.4</td><td class="td-green">3.8×</td><td class="td-green">€374</td><td class="td-muted">€99</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: AOV -->
+<div class="view" id="view-aov">
+  <div class="dash-header">
+    <h2>AOV <em>Dashboard</em></h2>
+    <p>Average Order Value evolution by customer type, product range, and market. Sub vs OTP basket comparison.</p>
+  </div>
+  <div class="dash-grid dash-grid--4" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>Overall AOV — Feb '26</h3><div class="kpi-big">€68</div><div class="tile-delta delta--warn" style="margin-top:4px">▼ −€2 vs LY</div></div>
+    <div class="dash-card"><h3>Subscription AOV</h3><div class="kpi-big" style="color:var(--teal-light)">€71.7</div><div class="tile-delta delta--up" style="margin-top:4px">▲ +0.8% vs LY</div></div>
+    <div class="dash-card"><h3>OTP / New Customer AOV</h3><div class="kpi-big">€50.8</div><div class="tile-delta delta--down" style="margin-top:4px">▼ −€3.2 vs LY</div></div>
+    <div class="dash-card"><h3>Returning OTP AOV</h3><div class="kpi-big">€72.3</div><div class="tile-delta delta--up" style="margin-top:4px">▲ +0.8% vs LY · Stable signal</div></div>
+  </div>
+  <div class="section-pad">
+    <h3>AOV by Market — Subscription vs OTP</h3>
+    <table class="data-table">
+      <thead><tr><th>Market</th><th>Sub AOV</th><th>OTP AOV</th><th>Sub vs OTP gap</th><th>MoM change</th></tr></thead>
+      <tbody>
+        <tr><td>FR</td><td>€74.1</td><td>€52.3</td><td>+42%</td><td class="td-muted">stable</td></tr>
+        <tr><td>BELUX</td><td>€71.2</td><td>€49.8</td><td>+43%</td><td class="td-green">▲ +€0.8</td></tr>
+        <tr><td>NL</td><td>€68.9</td><td>€47.2</td><td>+46%</td><td class="td-amber">▼ −€1.2</td></tr>
+        <tr><td>IT</td><td>€73.4</td><td>€54.1</td><td>+36%</td><td class="td-green">▲ +€2.1</td></tr>
+        <tr><td>IBERIA</td><td>€69.7</td><td>€48.9</td><td>+43%</td><td class="td-muted">stable</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: CSAT -->
+<div class="view" id="view-csat">
+  <div class="dash-header">
+    <h2>CSAT &amp; <em>Surveys</em></h2>
+    <p>Customer satisfaction and retention survey insights. Subscription touchpoint, post-purchase, and retention intent signals.</p>
+  </div>
+  <div class="dash-grid dash-grid--3" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>Overall CSAT Score</h3><div class="kpi-big" style="color:var(--amber)">74 / 100</div><div class="tile-delta delta--warn" style="margin-top:4px">▼ −3pts vs Q3 '25</div></div>
+    <div class="dash-card"><h3>Brand Churn Intent</h3><div class="kpi-big" style="color:var(--amber)">5.9%</div><div class="tile-context" style="margin-top:4px">% who say they won't buy E&amp;C again. FR: 4.5% · NL: 4.8% · BELUX: 3.7%</div></div>
+    <div class="dash-card"><h3>Retention Survey Responses</h3><div class="kpi-big">2,514</div><div class="tile-context" style="margin-top:4px">Sent after 90 days of no ordering. Response rate: 12.1%</div></div>
+  </div>
+  <div class="section-pad">
+    <h3>Planned Next Purchase — Retention Survey</h3>
+    <table class="data-table">
+      <thead><tr><th>Intent</th><th>%</th><th>Implication</th></tr></thead>
+      <tbody>
+        <tr><td>Dry + wet food (E&amp;C)</td><td class="td-green">47%</td><td>Strong. Core portfolio holding.</td></tr>
+        <tr><td>Combination of both</td><td>23%</td><td>Healthy. Multi-category interest.</td></tr>
+        <tr><td>Treats or dental only</td><td>7%</td><td>Neutral. Lower CLR potential.</td></tr>
+        <tr><td>Won't buy E&amp;C anymore</td><td class="td-red">4%</td><td>Brand churn. Investigate by market.</td></tr>
+        <tr><td>Undecided</td><td class="td-amber">19%</td><td>At-risk segment. Win-back opportunity.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="section-pad" style="border-top:1px solid var(--border)">
+    <h3>CSAT Score by Market</h3>
+    <table class="data-table">
+      <thead><tr><th>Market</th><th>CSAT Score</th><th>Brand Churn %</th><th>% SSC Churn</th><th>Trend</th></tr></thead>
+      <tbody>
+        <tr><td>FR</td><td>78</td><td>4.5%</td><td>21.7%</td><td class="td-muted">stable</td></tr>
+        <tr><td>BELUX</td><td>80</td><td>3.7%</td><td>25.9%</td><td class="td-green">▲ improving</td></tr>
+        <tr><td>NL</td><td class="td-red">68</td><td class="td-red">4.8%</td><td class="td-red">27.6%</td><td class="td-red">▼ declining</td></tr>
+        <tr><td>IT</td><td>76</td><td>3.9%</td><td>22.1%</td><td class="td-muted">stable</td></tr>
+        <tr><td>IBERIA</td><td>72</td><td>4.6%</td><td>21.8%</td><td class="td-amber">▼ slight drop</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px;font-size:10px;color:var(--muted)">NL continues to be the weakest market on all sentiment metrics. Combined with the highest delivery-related cancellations and negative subscriber delta, NL requires immediate action plan.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: OTIF -->
+<div class="view" id="view-otif">
+  <div class="dash-header">
+    <h2>OTIF <em>B2C</em></h2>
+    <p>On Time In Full — delivery performance for D2C orders. This is a root cause dashboard, not a primary KPI. Open when retention or cancellation signals are unexplained.</p>
+  </div>
+  <div class="dash-grid dash-grid--3" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>Overall OTIF</h3><div class="kpi-big" style="color:var(--amber)">80.0%</div><div class="tile-delta delta--down" style="margin-top:4px">Target: 95.0% · Gap: −15pp</div></div>
+    <div class="dash-card"><h3>On Time</h3><div class="kpi-big" style="color:var(--amber)">80.0%</div><div class="tile-context" style="margin-top:4px">Target: 95.6% — 1 in 5 orders arriving late</div></div>
+    <div class="dash-card"><h3>In Full</h3><div class="kpi-big" style="color:var(--green)">100.0%</div><div class="tile-context" style="margin-top:4px">Target: 96.3% — all items shipped completely ✓</div></div>
+  </div>
+  <div class="section-pad">
+    <div style="padding:14px;background:rgba(224,82,82,0.07);border:1px solid rgba(224,82,82,0.2);border-radius:6px;margin-bottom:20px">
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--red);margin-bottom:6px">⚠ CAUSAL LINK DETECTED</div>
+      <div style="font-size:11px;line-height:1.6">Delivery cancellations rose +5pp this month. On-time delivery at 80% (vs 95% target) means 1 in 5 customers receives their order late. Late deliveries in subscription contexts → broken habit loop → cancellation. <strong>NL has 31% delivery-related cancellations vs 20% average.</strong> OTIF by carrier and market should be investigated immediately.</div>
+    </div>
+    <h3>OTIF by Market</h3>
+    <table class="data-table">
+      <thead><tr><th>Market</th><th>On Time %</th><th>In Full %</th><th>OTIF %</th><th>Delivery cancel %</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>FR</td><td>88%</td><td>100%</td><td>88%</td><td>16%</td><td><span class="pill pill--amber"><span class="pill-dot"></span>Watch</span></td></tr>
+        <tr><td>BELUX</td><td>85%</td><td>100%</td><td>85%</td><td>18%</td><td><span class="pill pill--amber"><span class="pill-dot"></span>Watch</span></td></tr>
+        <tr><td>NL</td><td class="td-red">61%</td><td>100%</td><td class="td-red">61%</td><td class="td-red">31% ⚠</td><td><span class="pill pill--red"><span class="pill-dot"></span>Critical</span></td></tr>
+        <tr><td>IT</td><td>90%</td><td>100%</td><td>90%</td><td>15%</td><td><span class="pill pill--green"><span class="pill-dot"></span>OK</span></td></tr>
+        <tr><td>IBERIA</td><td>78%</td><td>100%</td><td>78%</td><td>22%</td><td><span class="pill pill--amber"><span class="pill-dot"></span>Watch</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: INCOME -->
+<div class="view" id="view-income">
+  <div class="dash-header">
+    <h2>Income <em>Statement</em></h2>
+    <p>P&amp;L overview including gross margin, EBITDA, and budget variances. D2C channel view.</p>
+  </div>
+  <div class="dash-grid dash-grid--4" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>Gross Revenue — YTD</h3><div class="kpi-big">€20.8M</div><div class="tile-delta delta--up" style="margin-top:4px">▲ +9.8% vs LY</div></div>
+    <div class="dash-card"><h3>Net Revenue — YTD</h3><div class="kpi-big">€18.1M</div><div class="tile-delta delta--up" style="margin-top:4px">▲ +8.3% vs LY</div></div>
+    <div class="dash-card"><h3>Gross Margin</h3><div class="kpi-big" style="color:var(--amber)">44.8%</div><div class="tile-delta delta--down" style="margin-top:4px">▼ −1.2pp vs budget</div></div>
+    <div class="dash-card"><h3>EBITDA</h3><div class="kpi-big" style="color:var(--amber)">−€1.97M</div><div class="tile-delta delta--down" style="margin-top:4px">▼ −16.8% vs LY · −15.6% vs budget</div></div>
+  </div>
+  <div class="section-pad">
+    <h3>Subscription Financials — New vs Returning</h3>
+    <table class="data-table">
+      <thead><tr><th>Period</th><th>New — Orders</th><th>New — Net Sales</th><th>New — Avg Basket</th><th>Ret — Orders</th><th>Ret — Net Sales</th><th>Ret — Avg Basket</th><th>Total Net Sales</th></tr></thead>
+      <tbody>
+        <tr><td>Feb '26</td><td>743</td><td>€35,882</td><td>€69.2</td><td>7,811</td><td>€453,652</td><td>€72.5</td><td>€489,534</td></tr>
+        <tr><td>Jan '26</td><td>1,088</td><td>€67,729</td><td>€69.1</td><td>12,312</td><td>€726,686</td><td>€71.7</td><td>€794,219</td></tr>
+        <tr><td>Dec '25</td><td>1,088</td><td>€51,722</td><td>€69.0</td><td>12,650</td><td>€702,534</td><td>€70.2</td><td>€754,394</td></tr>
+        <tr><td>Nov '25</td><td>1,378</td><td>€65,790</td><td>€70.1</td><td>11,938</td><td>€692,451</td><td>€74.7</td><td>€761,217</td></tr>
+        <tr><td>Oct '25</td><td>1,563</td><td>€94,401</td><td>€64.8</td><td>12,160</td><td>€670,988</td><td>€70.2</td><td>€775,386</td></tr>
+        <tr><td>Sep '25</td><td>1,517</td><td>€67,800</td><td>€83.1</td><td>11,640</td><td>€703,188</td><td>€70.5</td><td>€748,934</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: TARGETS -->
+<div class="view" id="view-targets">
+  <div class="dash-header">
+    <h2>Monthly Actuals <em>vs Targets</em></h2>
+    <p>How well each month is tracking against budget and last year. Running total view.</p>
+  </div>
+  <div class="dash-grid dash-grid--3" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>Feb '26 Actual — MTD</h3><div class="kpi-big" style="color:var(--amber)">€1.9M</div><div class="tile-delta delta--down" style="margin-top:4px">▼ −7.1% vs target</div></div>
+    <div class="dash-card"><h3>Feb '26 Target</h3><div class="kpi-big">€2.1M</div><div class="tile-context" style="margin-top:4px">Full month budget. Gap at current pacing: −€143K</div></div>
+    <div class="dash-card"><h3>Feb '25 Actual (LY)</h3><div class="kpi-big" style="color:var(--muted)">€2.0M</div><div class="tile-context" style="margin-top:4px">Same period last year. Currently tracking −5% vs LY.</div></div>
+  </div>
+  <div class="section-pad">
+    <h3>Monthly Net Sales — Actual vs Target vs LY</h3>
+    <table class="data-table">
+      <thead><tr><th>Month</th><th>Actual</th><th>Target</th><th>vs Target</th><th>LY</th><th>vs LY</th></tr></thead>
+      <tbody>
+        <tr><td>Jan '26</td><td>€2.52M</td><td>€2.45M</td><td class="td-green">▲ +2.9%</td><td>€1.85M</td><td class="td-green">▲ +36%</td></tr>
+        <tr><td>Feb '26 MTD</td><td>€1.90M</td><td>€2.05M</td><td class="td-red">▼ −7.1%</td><td>€2.00M</td><td class="td-amber">▼ −5%</td></tr>
+        <tr><td style="color:var(--muted)">Mar '26 (fcst)</td><td style="color:var(--muted)">€2.88M</td><td>€3.10M</td><td class="td-amber" style="color:var(--amber)">▼ −7.1%</td><td>€1.88M</td><td class="td-green">▲ +53%</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: YOY SALES -->
+<div class="view" id="view-yoy-sales">
+  <div class="dash-header">
+    <h2>YoY Sales <em>Momentum</em></h2>
+    <p>How net sales are evolving vs last year across loyalty segments and markets. New vs returning customer revenue split.</p>
+  </div>
+  <div class="dash-grid dash-grid--3" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>Total Net Sales — YTD</h3><div class="kpi-big">€4.42M</div><div class="tile-delta delta--up" style="margin-top:4px">▲ +15.3% vs LY YTD</div></div>
+    <div class="dash-card"><h3>Returning Customer Rev</h3><div class="kpi-big" style="color:var(--teal-light)">€3.11M</div><div class="tile-context" style="margin-top:4px">70.4% of YTD revenue. Healthy retention base.</div></div>
+    <div class="dash-card"><h3>New Customer Rev</h3><div class="kpi-big">€1.31M</div><div class="tile-context" style="margin-top:4px">29.6% of YTD revenue. Acquisition contribution.</div></div>
+  </div>
+  <div class="section-pad">
+    <h3>Net Sales by Market — LY vs TY</h3>
+    <table class="data-table">
+      <thead><tr><th>Market</th><th>LY Net Sales</th><th>TY Net Sales</th><th>YoY %</th><th>Loyalty Rev</th><th>New Rev</th></tr></thead>
+      <tbody>
+        <tr><td>FR</td><td>€119,477</td><td>€94,851</td><td class="td-red">−21%</td><td>€64,851</td><td>€30,000</td></tr>
+        <tr><td>BELUX</td><td>€68,210</td><td>€43,943</td><td class="td-red">−36%</td><td>€33,943</td><td>€10,000</td></tr>
+        <tr><td>NL</td><td>€98,039</td><td>€62,426</td><td class="td-red">−36%</td><td>€49,426</td><td>€13,000</td></tr>
+        <tr><td>DACH</td><td>€61,555</td><td>€61,300</td><td class="td-muted">−0.4%</td><td>€47,300</td><td>€14,000</td></tr>
+        <tr><td>IT</td><td>€41,990</td><td>€58,169</td><td class="td-green">▲ +39%</td><td>€43,169</td><td>€15,000</td></tr>
+        <tr><td>IBERIA</td><td>€37,054</td><td>€28,871</td><td class="td-amber">−22%</td><td>€22,871</td><td>€6,000</td></tr>
+        <tr style="font-weight:500"><td>Total</td><td>€453,397</td><td>€387,056</td><td class="td-amber">−15%</td><td>€238,289</td><td>€127,063</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ VIEW: DISCOUNTS -->
+<div class="view" id="view-discounts">
+  <div class="dash-header">
+    <h2>Discount <em>Orders</em></h2>
+    <p>Discount depth analysis — how discounts affect margin, conversion, and downstream retention quality.</p>
+  </div>
+  <div class="dash-grid dash-grid--4" style="border-bottom:1px solid var(--border)">
+    <div class="dash-card"><h3>Avg Discount % — First Orders</h3><div class="kpi-big" style="color:var(--amber)">24.7%</div><div class="tile-delta delta--down" style="margin-top:4px">▲ +2.3pp vs LY</div></div>
+    <div class="dash-card"><h3>Avg Discount % — Returning</h3><div class="kpi-big">6.8%</div><div class="tile-context" style="margin-top:4px">Returning customers use minimal discounts — price sensitivity mainly at acquisition.</div></div>
+    <div class="dash-card"><h3>Total Discount Value — MTD</h3><div class="kpi-big">€451K</div><div class="tile-delta delta--down" style="margin-top:4px">▲ +11% vs LY</div></div>
+    <div class="dash-card"><h3>Retention impact</h3><div class="kpi-big" style="color:var(--red)">−9pp</div><div class="tile-context" style="margin-top:4px">% first orders on sub declined 9pp as discount depth on first orders increased. Likely causal.</div></div>
+  </div>
+  <div class="section-pad">
+    <h3>Discount Depth vs 90-Day Retention Rate</h3>
+    <table class="data-table">
+      <thead><tr><th>Discount Band</th><th>NC Volume</th><th>% of NCs</th><th>2nd Order CVR</th><th>% Sub on 1st</th><th>Gross Margin impact</th></tr></thead>
+      <tbody>
+        <tr><td>No discount (0%)</td><td>4,201</td><td>6%</td><td class="td-green">38%</td><td class="td-green">31%</td><td class="td-green">+4pp vs avg</td></tr>
+        <tr><td>Low (1–10%)</td><td>8,441</td><td>12%</td><td class="td-green">34%</td><td class="td-green">28%</td><td class="td-green">+2pp vs avg</td></tr>
+        <tr><td>Medium (11–20%)</td><td>22,918</td><td>33%</td><td>24%</td><td>20%</td><td class="td-muted">avg</td></tr>
+        <tr><td>High (21–30%)</td><td>28,334</td><td>41%</td><td class="td-amber">18%</td><td class="td-amber">14%</td><td class="td-amber">−3pp vs avg</td></tr>
+        <tr><td>Very high (31%+)</td><td>5,568</td><td>8%</td><td class="td-red">12%</td><td class="td-red">9%</td><td class="td-red">−7pp vs avg</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:14px;padding:12px;background:rgba(0,123,118,0.07);border:1px solid var(--teal-dim);border-radius:6px;font-size:11px;line-height:1.6">
+      💡 <strong>Recommendation:</strong> Shift NC acquisition toward 0–10% discount bands (currently only 18% of volume). Cap CONTENT CREATOR and high-discount codes. Even a 10pp shift from High to Low discount would improve 2nd order CVR by ~4pp and increase sub conversion by ~8pp on first orders.
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /app -->
+
+<script>
+const pages = {
+  'home':              { title: 'Command Center', sub: 'All dashboards', back: false },
+  'income':            { title: 'Income Statement', sub: 'L1 · Revenue', back: true },
+  'yoy-sales':         { title: 'YoY Sales Momentum', sub: 'L1 · Revenue', back: true },
+  'targets':           { title: 'Actuals vs Targets', sub: 'L1 · Revenue', back: true },
+  'sub-status':        { title: 'Subscription Status', sub: 'L2A · Retention', back: true },
+  'loop-cancel':       { title: 'Loop Cancellations', sub: 'L2A · Retention', back: true },
+  'retention-pacing':  { title: 'Retention Pacing', sub: 'L2A · Retention', back: true },
+  'northstars':        { title: 'Northstars', sub: 'L2A · Retention', back: true },
+  'early-retention':   { title: 'Early Retention Indicators', sub: 'L2A · Retention', back: true },
+  'yoy-nc':            { title: 'YoY NC Momentum', sub: 'L2B · Acquisition', back: true },
+  'activation-funnel': { title: 'Activation Funnel', sub: 'L2B · Acquisition', back: true },
+  'acq-codes':         { title: 'Acquisition Code Performance', sub: 'L2B · Acquisition', back: true },
+  'clr':               { title: 'CLR Evolution', sub: 'L2C · Quality', back: true },
+  'aov':               { title: 'AOV Dashboard', sub: 'L2C · Quality', back: true },
+  'csat':              { title: 'CSAT & Surveys', sub: 'L2C · Quality', back: true },
+  'otif':              { title: 'OTIF B2C', sub: 'L3 · Operations', back: true },
+  'discounts':         { title: 'Discount Orders', sub: 'L3 · Operations', back: true },
+};
+
+function nav(id) {
+  // hide all views
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  // show target view
+  const view = document.getElementById('view-' + id);
+  if (view) view.classList.add('active');
+
+  // update nav highlight
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(item => {
+    if (item.getAttribute('onclick') && item.getAttribute('onclick').includes("'" + id + "'")) {
+      item.classList.add('active');
+    }
+  });
+
+  // update topbar
+  const p = pages[id] || { title: id, sub: '', back: true };
+  document.getElementById('page-title').innerHTML = '<span>' + p.title + '</span> · ' + p.sub;
+  const backBtn = document.getElementById('back-btn');
+  if (p.back) backBtn.classList.add('visible');
+  else backBtn.classList.remove('visible');
+
+  // scroll to top
+  document.querySelector('.content').scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
